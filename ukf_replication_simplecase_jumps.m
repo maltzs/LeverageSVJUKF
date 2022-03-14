@@ -9,11 +9,11 @@ rng(123);
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
 
-T = 80000;
+T = 20000;
 start = 1;
 stop = T;
 
-jump = [20000 40000 60000 T+1];
+jump = [5000 10000 T+1];
 k = 1;
 
 x = zeros(1,T);
@@ -26,7 +26,7 @@ mu_v = -0.635;
 sigma_v = sqrt(1.234);
 S_v = -1.536;
 
-b = [0.1 0.8 1; 0.3 0.9 1; 0.1 0.8 1; -0.1 0.7 1]';
+b = [0.1 0.8 1; 0.3 0.9 1; 0.1 0.8 1]';
 Qnoise= [1e-6 1e-6];
 beta_hat = [0 0.7];
 x(1)= b(1,k)/(1-b(2,k));          % initial value is s.s. mean
@@ -145,7 +145,7 @@ for i = 1:M
     subplot(M,1,i);
     plot(t,b_plot(i,:),'b--',t,a_hat(1+i,:));
     xlim([0 T-1]);
-    title("\beta_" + i);
+    title("\beta_" + (i-1));
 end
 
 figure;

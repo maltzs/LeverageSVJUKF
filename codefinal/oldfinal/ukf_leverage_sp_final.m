@@ -8,43 +8,32 @@ clear; clc; close all;
 % and eta iid N(0,sigma2_eta)
 % y(t)= 0.5x(t)+v(t)         with v iid log(|N(0,1)|)
 
-rng(12345);
-
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
 f = @(epsilon, alpha, gamma_1, gamma_2) alpha*((epsilon < 0) - 0.5) ...
         + gamma_1*epsilon + gamma_2*(abs(epsilon) - sqrt(2/pi));
 
-T = 100000;
+load("..\spall.mat");
+years = [0 19];
+years = years + 1;
+u = u(starts(years(1)):starts(years(2)+1)-1);
+T = length(u);
 start = 1;
 stop = T;
 
-x = zeros(1,T+1);
-u = zeros(1,T);
-y = zeros(1,T);
+y = log(abs(u));
 
 mu_v = -0.635;
 sigma_v = sqrt(1.234);
 S_v = -1.536;
 
-jump = [20000 40000 60000 80000 T+1];
-k = 1;
+Qnoise= [1e-6 1e-5 1e-7 1e-7 1e-8];
 
-mu = [0 1 1 1 1];
-phi = [0.8 0.8 0.98 0.98 0.98];
-alpha = [0.07 0.07 0.07 0.27 0.27];
-gamma_1 = [-0.08 -0.08 -0.08 -0.08 -0.28];
-gamma_2 = [0.1 0.1 0.1 0.1 0.1];
-sigma_eta = sqrt(0.05);
-Qnoise = [1e-6 1e-6 1e-6 1e-6 1e-6];
-% Qnoise= [1e-6 1e-5 1e-7 1e-7 1e-8];
-
-width = 0.4;
-mu_hat = mu(k) - width/2 + width*rand;
-phi_hat = phi(k) - width/2 + width*rand;
-alpha_hat = alpha(k) - width/2 + width*rand;
-gamma_1_hat = gamma_1(k) - width/2 + width*rand;
-gamma_2_hat = gamma_2(k) - width/2 + width*rand;
+mu_hat = 0;
+phi_hat = 0.9;
+alpha_hat = 0.07;
+gamma_1_hat = -0.08;
+gamma_2_hat = 0.1;
 
 theta_hat = [mu_hat*(1-phi_hat) phi_hat alpha_hat gamma_1_hat gamma_2_hat];
 c = 0.5;                            % alpha in D matrix
@@ -53,7 +42,8 @@ M = length(theta_hat);
 a_hat = zeros(M+1,T);   % augmented state vectors over time
 y_hat = zeros(1,T);     % measurements over time
 sigma_eta_hat = zeros(1,T);
-% sigma_eta_hat(1) = sigma_eta - 0.1 + 0.2*rand;
+sigma_eta = sqrt(0.16);
+sigma_eta_hat(1) = sigma_eta - 0.1 + 0.2*rand;
 sigma_eta_hat(1) = sigma_eta;
 Q = diag([sigma_eta_hat(1)^2,Qnoise]);  % noise matrix
 lambda = 0.9;
@@ -70,25 +60,6 @@ P_corr = diag([0.5 0.01 0.1 0.01 0.01 0.01]);
 varx = (alpha_hat^2/2 - sqrt(2/pi)*alpha_hat*gamma_1_hat + ...
     sqrt(2/pi)*alpha_hat*gamma_2_hat + gamma_1_hat^2 + ...
     gamma_2_hat^2 + sigma_eta_hat(1)^2)/(1 - phi_hat^2);
-
-x(1) = mu(k);          % initial value is s.s. mean
-
-theta_plot = zeros(M,T);
-
-for t = 1:T
-    if t == jump(k)
-        k = k + 1;
-    end
-
-    % Actual values
-    epsilon = randn;
-    u(t) = exp(x(t)*c)*epsilon;
-    y(t) = log(abs(u(t)));
-    x(t+1) = mu(k)*(1-phi(k)) + phi(k)*x(t) ...
-        + f(epsilon, alpha(k), gamma_1(k), gamma_2(k)) + randn*sigma_eta;
-
-    theta_plot(:,t) = [mu(k)*(1-phi(k)) phi(k) alpha(k) gamma_1(k) gamma_2(k)];
-end        
 
 for t = 2:T
     epsilon = u(t-1)*exp(-a_hat(1,t-1)*c);
@@ -131,14 +102,7 @@ end
 
 x_hat = a_hat(1,:);
 
-% figure;
-% parcorr(x_hat(start:stop));
-% mdl = arima(1,0,0);
-% estimate(mdl,x_hat(start:stop)')
-
 z_hat = u(start:stop) .* exp(-c * x_hat(start:stop));
-[archy, parchy] = archtest(u);
-fprintf("archtest of u: " + archy + " (pvalue: " + parchy + ")\n")
 [archz, parchz] = archtest(z_hat);
 fprintf("archtest of z_hat: " + archz + " (pvalue: " + parchz + ")\n")
 
@@ -147,6 +111,7 @@ fprintf("LB Q test: " + lbq + " (pvalue: " + p + ")\n")
 
 figure;
 qqplot(z_hat);
+title("");
 
 fprintf("Mean: " + mean(z_hat) + "\n")
 fprintf("Variance: " + var(z_hat) + "\n")
@@ -154,79 +119,50 @@ fprintf("Skewness: " + skewness(z_hat) + "\n")
 fprintf("Kurtosis: " + kurtosis(z_hat) + "\n")
 
 figure;
-subplot(3,1,1);
-autocorr(z_hat);
-title("z_{hat}");
-
-subplot(3,1,2);
-autocorr(abs(z_hat));
-title("|z_{hat}|");
-
-subplot(3,1,3);
-autocorr(z_hat.^2);
-title("log|z_{hat}|");
-
-figure;
-subplot(3,1,1);
-autocorr(u);
-title("u")
-
-subplot(3,1,2);
-autocorr(abs(u));
-title("|u|");
-
-subplot(3,1,3);
-autocorr(log(abs(u)));
-title("log|u|");
-
-t = 0:T-1;
-figure;
 subplot(2,1,1);
-plot(t,x(1:T),'b--',t,x_hat);
-xlim([0 T-1]);
-title("x");
+autocorr(z_hat);
+title("$$\bf{\hat{z}}$$","Interpreter","latex");
 
 subplot(2,1,2);
-plot(t,y,'b--',t,y_hat);
-xlim([0 T-1]);
-title("y");
+autocorr(z_hat.^2);
+title("$$\bf{\hat{z}^2}$$","Interpreter","latex");
 
 a_hat(3,:) = sig(a_hat(3,:));
 % a_hat(4,:) = exp(a_hat(4,:));
 % a_hat(5,:) = -exp(a_hat(5,:));
 
 t = 0:T-1;
-titles = ["\mu(1-\phi)" "\phi" "\alpha" "\gamma_1" "\gamma_2"];
+titles = ["\mu" "\phi" "\alpha" "\gamma_1" "\gamma_2"];
 figure;
 subplot(2,1,1);
-plot(t,theta_plot(1,:),'b--',t,a_hat(2,:));
+plot(t,a_hat(2,:));
 xlim([0 T-1]);
 title(titles(1));
 
 subplot(2,1,2);
-plot(t,theta_plot(2,:),'b--',t,a_hat(3,:));
+plot(t,a_hat(3,:));
 xlim([0 T-1]);
 title(titles(2));
 
 figure;
 subplot(2,1,1);
-plot(t,theta_plot(3,:),'b--',t,a_hat(4,:));
+plot(t,a_hat(4,:));
 xlim([0 T-1]);
 title(titles(3));
 
 subplot(2,1,2);
-plot(t,theta_plot(4,:),'b--',t,a_hat(5,:));
+plot(t,a_hat(5,:));
 xlim([0 T-1]);
 title(titles(4));
 
 figure;
 subplot(2,1,1);
-plot(t,theta_plot(5,:),'b--',t,a_hat(6,:));
+plot(t,a_hat(6,:));
 xlim([0 T-1]);
 title(titles(5));
 
 subplot(2,1,2);
-plot(t,sigma_eta*ones(1,T),'b--',t,sigma_eta_hat);
+plot(t,sigma_eta_hat);
 xlim([0 T-1]);
 title("\sigma_{\eta}");
 

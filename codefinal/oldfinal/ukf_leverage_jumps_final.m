@@ -8,7 +8,7 @@ clear; clc; close all;
 % and eta iid N(0,sigma2_eta)
 % y(t)= 0.5x(t)+v(t)         with v iid log(|N(0,1)|)
 
-rng(12345);
+rng(123);
 
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
@@ -41,7 +41,7 @@ Qnoise = [1e-6 1e-6 1e-6 1e-6 1e-6];
 
 width = 0.4;
 mu_hat = mu(k) - width/2 + width*rand;
-phi_hat = phi(k) - width/2 + width*rand;
+phi_hat = phi(1)-width/2+(1-phi(1)+width/2)*rand;
 alpha_hat = alpha(k) - width/2 + width*rand;
 gamma_1_hat = gamma_1(k) - width/2 + width*rand;
 gamma_2_hat = gamma_2(k) - width/2 + width*rand;
@@ -53,12 +53,11 @@ M = length(theta_hat);
 a_hat = zeros(M+1,T);   % augmented state vectors over time
 y_hat = zeros(1,T);     % measurements over time
 sigma_eta_hat = zeros(1,T);
-% sigma_eta_hat(1) = sigma_eta - 0.1 + 0.2*rand;
 sigma_eta_hat(1) = sigma_eta;
 Q = diag([sigma_eta_hat(1)^2,Qnoise]);  % noise matrix
 lambda = 0.9;
 
-a_hat(1,1) = mu_hat;      % initial x approx value
+a_hat(1,1) = theta(1,k)/(1-theta(2,k));      % initial x approx value
 % a_hat(2:M+1,1) = [theta_hat(1)*(1-theta_hat(2)); invsig(theta_hat(2)); theta_hat(3); theta_hat(4); theta_hat(5)];
 a_hat(2:M+1,1) = [theta_hat(1); invsig(theta_hat(2)); theta_hat(3); theta_hat(4); theta_hat(5)];
 y_hat(1) = c*a_hat(1,1);
@@ -71,7 +70,7 @@ varx = (alpha_hat^2/2 - sqrt(2/pi)*alpha_hat*gamma_1_hat + ...
     sqrt(2/pi)*alpha_hat*gamma_2_hat + gamma_1_hat^2 + ...
     gamma_2_hat^2 + sigma_eta_hat(1)^2)/(1 - phi_hat^2);
 
-x(1) = mu(k);          % initial value is s.s. mean
+x(1) = mu(k)*(1-phi(k))/(1-phi(k));          % initial value is s.s. mean
 
 theta_plot = zeros(M,T);
 
@@ -98,18 +97,18 @@ for t = 2:T
     [a_hatcorr, P_corr, y_hat(t)] = ...
         correction(M, c, [a_hatpred; mu_v], P_pred, sigma_v, S_v, y(t));
 
-    a = 4*(var(y(1:t)) - sigma_v^2);
-    if a > 0
-        varx = a;
-    end
-    newsigmaeta = sqrt(varx * (1-sig(a_hatcorr(3))^2) - a_hatcorr(4)^2/2 + sqrt(2/pi)*a_hatcorr(4)*a_hatcorr(5) - ...
-    sqrt(2/pi)*a_hatcorr(4)*a_hatcorr(6) - a_hatcorr(5)^2 - ...
-    a_hatcorr(6)^2);
-    if isreal(newsigmaeta) && ~isnan(newsigmaeta) && ~isinf(newsigmaeta)
-        sigma_eta_hat(t) = lambda*sigma_eta_hat(t-1) + (1-lambda)*newsigmaeta;
-    else
-        sigma_eta_hat(t) = sigma_eta_hat(t-1);
-    end
+%     a = 4*(var(y(1:t)) - sigma_v^2);
+%     if a > 0
+%         varx = a;
+%     end
+%     newsigmaeta = sqrt(varx * (1-sig(a_hatcorr(3))^2) - a_hatcorr(4)^2/2 + sqrt(2/pi)*a_hatcorr(4)*a_hatcorr(5) - ...
+%     sqrt(2/pi)*a_hatcorr(4)*a_hatcorr(6) - a_hatcorr(5)^2 - ...
+%     a_hatcorr(6)^2);
+%     if isreal(newsigmaeta) && ~isnan(newsigmaeta) && ~isinf(newsigmaeta)
+%         sigma_eta_hat(t) = lambda*sigma_eta_hat(t-1) + (1-lambda)*newsigmaeta;
+%     else
+%         sigma_eta_hat(t) = sigma_eta_hat(t-1);
+%     end
 
 %     m = a_hatcorr(2)/(1-sig(a_hatcorr(3)));
 % %     m = a_hatcorr(2);
@@ -131,14 +130,7 @@ end
 
 x_hat = a_hat(1,:);
 
-% figure;
-% parcorr(x_hat(start:stop));
-% mdl = arima(1,0,0);
-% estimate(mdl,x_hat(start:stop)')
-
 z_hat = u(start:stop) .* exp(-c * x_hat(start:stop));
-[archy, parchy] = archtest(u);
-fprintf("archtest of u: " + archy + " (pvalue: " + parchy + ")\n")
 [archz, parchz] = archtest(z_hat);
 fprintf("archtest of z_hat: " + archz + " (pvalue: " + parchz + ")\n")
 
@@ -147,6 +139,7 @@ fprintf("LB Q test: " + lbq + " (pvalue: " + p + ")\n")
 
 figure;
 qqplot(z_hat);
+title("");
 
 fprintf("Mean: " + mean(z_hat) + "\n")
 fprintf("Variance: " + var(z_hat) + "\n")
@@ -154,46 +147,15 @@ fprintf("Skewness: " + skewness(z_hat) + "\n")
 fprintf("Kurtosis: " + kurtosis(z_hat) + "\n")
 
 figure;
-subplot(3,1,1);
-autocorr(z_hat);
-title("z_{hat}");
-
-subplot(3,1,2);
-autocorr(abs(z_hat));
-title("|z_{hat}|");
-
-subplot(3,1,3);
-autocorr(z_hat.^2);
-title("log|z_{hat}|");
-
-figure;
-subplot(3,1,1);
-autocorr(u);
-title("u")
-
-subplot(3,1,2);
-autocorr(abs(u));
-title("|u|");
-
-subplot(3,1,3);
-autocorr(log(abs(u)));
-title("log|u|");
-
-t = 0:T-1;
-figure;
 subplot(2,1,1);
-plot(t,x(1:T),'b--',t,x_hat);
-xlim([0 T-1]);
-title("x");
+autocorr(z_hat);
+title("$$\bf{\hat{z}}$$","Interpreter","latex");
 
 subplot(2,1,2);
-plot(t,y,'b--',t,y_hat);
-xlim([0 T-1]);
-title("y");
+autocorr(z_hat.^2);
+title("$$\bf{\hat{z}^2}$$","Interpreter","latex");
 
 a_hat(3,:) = sig(a_hat(3,:));
-% a_hat(4,:) = exp(a_hat(4,:));
-% a_hat(5,:) = -exp(a_hat(5,:));
 
 t = 0:T-1;
 titles = ["\mu(1-\phi)" "\phi" "\alpha" "\gamma_1" "\gamma_2"];
@@ -202,33 +164,32 @@ subplot(2,1,1);
 plot(t,theta_plot(1,:),'b--',t,a_hat(2,:));
 xlim([0 T-1]);
 title(titles(1));
+xlabel("Time");
 
 subplot(2,1,2);
 plot(t,theta_plot(2,:),'b--',t,a_hat(3,:));
 xlim([0 T-1]);
 title(titles(2));
+xlabel("Time");
 
 figure;
-subplot(2,1,1);
+subplot(3,1,1);
 plot(t,theta_plot(3,:),'b--',t,a_hat(4,:));
 xlim([0 T-1]);
 title(titles(3));
+xlabel("Time");
 
-subplot(2,1,2);
+subplot(3,1,2);
 plot(t,theta_plot(4,:),'b--',t,a_hat(5,:));
 xlim([0 T-1]);
 title(titles(4));
+xlabel("Time");
 
-figure;
-subplot(2,1,1);
+subplot(3,1,3);
 plot(t,theta_plot(5,:),'b--',t,a_hat(6,:));
 xlim([0 T-1]);
 title(titles(5));
-
-subplot(2,1,2);
-plot(t,sigma_eta*ones(1,T),'b--',t,sigma_eta_hat);
-xlim([0 T-1]);
-title("\sigma_{\eta}");
+xlabel("Time");
 
 
 function [a_hatpred, P_pred] = prediction(M, mu, P, Q, epsilon)

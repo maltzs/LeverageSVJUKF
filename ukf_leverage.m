@@ -8,14 +8,14 @@ clear; clc; close all;
 % and eta iid N(0,sigma2_eta)
 % y(t)= 0.5x(t)+v(t)         with v iid log(|N(0,1)|)
 
-rng(456);
+rng(12345);
 
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
 f = @(epsilon, alpha, gamma_1, gamma_2) alpha*((epsilon < 0) - 0.5) ...
         + gamma_1*epsilon + gamma_2*(abs(epsilon) - sqrt(2/pi));
 
-T = 80000;
+T = 20000;
 start = 1;
 stop = T;
 
@@ -28,14 +28,14 @@ sigma_v = sqrt(1.234);
 S_v = -1.536;
 
 mu = 0;
-phi = 0.8;
+phi = 0.98;
 alpha = 0.07;
 gamma_1 = -0.08;
 gamma_2 = 0.1;
 theta = [mu; phi; alpha; gamma_1; gamma_2];
 sigma_eta = sqrt(0.05);
-% Qnoise = [1e-6 1e-6 1e-6 1e-6 1e-6];
-Qnoise= [1e-6 1e-5 1e-7 1e-7 1e-8];
+Qnoise = [1e-6 1e-6 1e-6 1e-6 1e-6];
+% Qnoise= [1e-6 1e-5 1e-7 1e-7 1e-8];
 
 width = 0.4;
 mu_hat = mu - width/2 + width*rand;
@@ -131,7 +131,7 @@ fprintf("archtest of u: " + archy + " (pvalue: " + parchy + ")\n")
 [archz, parchz] = archtest(z_hat);
 fprintf("archtest of z_hat: " + archz + " (pvalue: " + parchz + ")\n")
 
-[lbq, p] = lbqtest(z_hat);
+[lbq, p] = lbqtest(z_hat.^2);
 fprintf("LB Q test: " + lbq + " (pvalue: " + p + ")\n")
 
 figure;
@@ -152,7 +152,7 @@ autocorr(abs(z_hat));
 title("|z_{hat}|");
 
 subplot(3,1,3);
-autocorr(log(abs(z_hat)));
+autocorr(z_hat.^2);
 title("log|z_{hat}|");
 
 figure;

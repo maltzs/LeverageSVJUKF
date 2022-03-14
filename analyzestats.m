@@ -4,10 +4,10 @@
 %     end
 % end
 
-for i = 1:100
+for i = 1:84
     v(i) = stats_jukf(i).moments.kurtz;
 end
-for i = 1:100
+for i = 1:84
     n(i) = stats_nojukf(i).moments.kurtz;
 end
 

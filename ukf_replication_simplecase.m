@@ -4,14 +4,14 @@ clear; clc; close all;
 % x(t)= b0+b1x(t-1)+b2q(t)   with b2 fixed, q iid N(0,1)
 % y(t)= 0.5x(t)+v(t)         with v iid N(0,1)
 
-% rng(123);
+rng(123);
 
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
 
 T = 20000;
 start = 1;
-stop = 20000;
+stop = T;
 
 x = zeros(1,T);
 u = zeros(1,T);
@@ -133,7 +133,7 @@ for i = 1:M
     subplot(M,1,i);
     plot(t,b(i)*ones(1,T),'b--',t,a_hat(1+i,:));
     xlim([0 T-1]);
-    title("\beta_" + i);
+    title("\beta_" + (i-1));
 end
 
 

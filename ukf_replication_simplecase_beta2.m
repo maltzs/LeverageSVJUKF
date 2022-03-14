@@ -9,8 +9,8 @@ rng(123);
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
 
-T = 2000;
-stop = 2000;
+T = 20000;
+stop = T;
 
 x = zeros(1,T);
 y = zeros(1,T);
@@ -25,9 +25,9 @@ S_v = -1.536;
 %sigma_v= 1;
 %S_v= 0;
 
-b = [0.1; 0.8; 2];
+b = [0.1; 0.8; 1];
 Qnoise= [1e-6 1e-6 1e-6];
-beta_hat = [0.2 0.9 1];
+beta_hat = [0.2 0.9 0.8];
 x(1)= b(1)/(1-b(2));          % initial value is s.s. mean
 c = 0.5;                            % alpha in D matrix
 y0= c*x(1);             % initial value for y
@@ -48,6 +48,9 @@ inno(1) = 0;
 % Initialization for loop
 a_hatcorr = a_hat(:,1);
 P_corr = [beta_hat(3)^2/(1-beta_hat(2)^2) 0 0 0; 0 0.5 0 0; 0 0 0.5 0; 0 0 0 0.5];
+A = randn(4);
+P_corr = 0.1*A*A';
+P_corr = 0.1*ones(4) + 0.4*eye(4);
 
 for t = 2:T
     % Actual values
@@ -104,16 +107,20 @@ end
 
 function [a_hatpred, P_pred] = prediction(M, mu, P, Q)
     sig = @(x) 1./(1+exp(-x));
-
-    [w, chi] = create_gaussian_sigma_points(mu, P);
+%     mu(5) = 0;
+%     a = sqrt(0.00001)*ones(1,4);
+%     P1 = [chol(P) zeros(4,1);a sqrt(0.99996)];
+%     P2 = P1*P1';
+    P2 = [P zeros(4,1); zeros(1,4) 1];
+    [w, chi] = create_gaussian_sigma_points([mu;0], P2);
 
     % Pass sigma points through process equation
     chi_x = chi(1,:);
     chi_theta = chi(2:M+1,:);
     chi_beta = [chi_theta(1,:); sig(chi_theta(2,:)); exp(chi_theta(3,:))];
-%     chi_q = chi(end,:);
-    q = randn;
-    chi_pred = [sum(chi_beta .* [ones(1,length(chi_x)); chi_x; q*ones(1,length(chi_x))]); ...
+    chi_q = chi(end,:);
+%     q = randn;
+    chi_pred = [sum(chi_beta .* [ones(1,length(chi_x)); chi_x; chi_q]); ...
         chi_theta];
     
     % Compute predicted augmented state and covariance matrix
@@ -137,17 +144,13 @@ function [a_hatcorr, P_corr, y_hat, g] = ...
     %    recompute
     chi_a= chi(1:end-1,:);
     chi_y= chi(end,:);
- %keyboard   
     y_hat= chi_y*w;
     P_ay= (chi_a-mu(1:end-1))*diag(w)*(chi_y-y_hat)';
     P_yy= (chi_y-y_hat)*diag(w)*(chi_y-y_hat)';
     G= P_ay*inv(P_yy);
-    a = [1; 1; sig(mu(end-1))*(1-sig(mu(end-1)))];
-    b = [1; 1; 1./(sig(mu(end-1))*(1-sig(mu(end-1))))];
     a_hatcorr= mu(1:end-1)+G*(y-y_hat);
     P_corr= P-G*P_yy*G';
-    g = G(3)*(y-y_hat);
-   %keyboard 
+    g=1;
 end
 
 function [w, chi] = create_gaussian_sigma_points(mu, C)

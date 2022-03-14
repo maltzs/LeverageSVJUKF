@@ -4,7 +4,7 @@ clear; clc; close all;
 % x(t)= b0+b1x(t-1)+b2q(t)   with b2 fixed, q iid N(0,1)
 % y(t)= 0.5x(t)+v(t)         with v iid N(0,1)
 
-rng(123);
+rng(12345);
 
 sig = @(x) 1./(1+exp(-x));  %sigmoid function
 invsig= @(x) -log(1./x-1);   %inverse sigmoid function
@@ -30,6 +30,7 @@ x(1) = b(1)/(1-b(2));          % initial value is s.s. mean
 c = 0.5;                            % alpha in D matrix
 y(1)= c*x(1);             % initial value for y
 u(1) = exp(c * x(1)) * z(1);
+y(1) = log(abs(u(1)));
 M = length(b) - 1;
 Q = diag([beta_hat(end)^2,Qnoise]);  % noise matrix
 
