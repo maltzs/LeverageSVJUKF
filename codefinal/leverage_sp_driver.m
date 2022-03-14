@@ -40,4 +40,5 @@ ukf = false;                 % no UKF comparison
 pf = false;                  % no particle filter comparison
 
 % Runs leverage SV-JUKF.
-leverage_SVJUKF_sim(N_sim, T, jumps, N_particles, theta, M, width, P_corr, Q_noise, sp, figs, avg, ukf, pf);
+leverage_SVJUKF_sim(N_sim, T, jumps, N_particles, theta, M, width, ...
+    P_corr, Q_noise, sp, figs, avg, ukf, pf);

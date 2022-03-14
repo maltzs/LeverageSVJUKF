@@ -17,7 +17,11 @@ clear;
 clc;
 close all;
 
-rng(123);
+% Sets up random number generator for continuous resampling in particle
+% filter.
+rs = ...
+    RandStream('mt19937ar','Seed',123,'NormalTransform','Inversion');
+RandStream.setGlobalStream(rs);
 
 N_sim = 100;          % number of simulations
 T = 2000;             % time span of run
@@ -53,4 +57,5 @@ ukf = false;    % no UKF comparison
 pf = true;      % run particle filter comparison
 
 % Runs leverage SV-JUKF.
-leverage_SVJUKF_sim(N_sim, T, jumps, N_particles, theta, M, width, P_corr, Q_noise, sp, figs, avg, ukf, pf);
+leverage_SVJUKF_sim(N_sim, T, jumps, N_particles, theta, M, width, ...
+    P_corr, Q_noise, sp, figs, avg, ukf, pf);
