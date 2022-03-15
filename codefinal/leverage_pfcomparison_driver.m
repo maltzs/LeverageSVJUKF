@@ -23,10 +23,10 @@ rs = ...
     RandStream('mt19937ar','Seed',123,'NormalTransform','Inversion');
 RandStream.setGlobalStream(rs);
 
-N_sim = 100;          % number of simulations
-T = 2000;             % time span of run
+N_sim = 10;          % number of simulations
+T = 500;             % time span of run
 jumps = T+1;          % no jumps
-N_particles = 1e4;    % number of particles used in particle filter
+N_particles = 1e2;    % number of particles used in particle filter
 
 % True theta values.
 mu = 0;
