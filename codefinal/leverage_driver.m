@@ -1,7 +1,7 @@
 % Leverage stochastic-volatility joint unscented Kalman filter (SV-JUKF):
 % Model takes the leverage effect into account.
 %
-% x(t) = mu(1-phi)+phix(t-1)+f(epsilon, alpha, gamma_1, gamma_2)
+% x(t) = beta_0+phix(t-1)+f(epsilon, alpha, gamma_1, gamma_2)
 %     +sigma_etaq(t)
 % with 0 < phi < 1, f(epsilon, alpha, gamma_1, gamma_2) =
 %                       alpha(I(epsilon < 0)-0.5)+gamma_1epsilon+

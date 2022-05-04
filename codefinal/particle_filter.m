@@ -25,7 +25,7 @@ function [L, z_hat] = particle_filter(y, T, N, theta, sigma_eta_hat, prime)
     f = @(epsilon, alpha, gamma_1, gamma_2) alpha*((epsilon < 0)-0.5) ...
         +gamma_1*epsilon+gamma_2*(abs(epsilon)-sqrt(2/pi));
     
-    mutimes1mphi_hat = theta(1);
+    beta_0_hat = theta(1);
 
     % Transforms phi prime back to phi if necessary.
     if prime
@@ -41,7 +41,7 @@ function [L, z_hat] = particle_filter(y, T, N, theta, sigma_eta_hat, prime)
     L = 0;    % likelihood value
 
     h_particles = randn(1,N)*sqrt(sigma_eta_hat^2/(1-phi_hat^2)) + ...
-        mutimes1mphi_hat/(1-phi_hat);    % particles
+        beta_0_hat/(1-phi_hat);    % particles
 
     % Residual series is computed via the mean of the particles' state.
     z_hat = zeros(1,T);
@@ -51,7 +51,7 @@ function [L, z_hat] = particle_filter(y, T, N, theta, sigma_eta_hat, prime)
     for t = 2:T
         % Step 1: Sample next state.
         h_particles_tilde = randn(1,N)*sigma_eta_hat + ...
-            mutimes1mphi_hat + phi_hat*h_particles + ...
+            beta_0_hat + phi_hat*h_particles + ...
             f(y(t-1)*exp(-h_particles/2), alpha_hat, gamma_1_hat, ...
             gamma_2_hat);
 

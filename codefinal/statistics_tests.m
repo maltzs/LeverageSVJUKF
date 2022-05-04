@@ -15,7 +15,7 @@ function stats = statistics_tests(z_hat, figs)
 %           - kurtosis: Kurtosis of z_hat.
 %       - tests: A struct with results from tests for ARCH effects in
 %       z_hat. Has the following fields:
-%           - plbq: p-value from Lyung-Box Q test.
+%           - plbq: p-value from Ljung-Box Q test.
 %           - parch: p-value from ARCH test.
 %       - acf: A struct with sample autocorrelations. Has the following
 %       fields:
@@ -50,7 +50,7 @@ function stats = statistics_tests(z_hat, figs)
         qqplot(z_hat);
         title("");
         
-        table(["Lyung-Box Q"; "ARCH"],[stats.tests.plbq; ...
+        table(["Ljung-Box Q"; "ARCH"],[stats.tests.plbq; ...
             stats.tests.parch],'VariableNames',["Test","p-value"])
 
         figure;

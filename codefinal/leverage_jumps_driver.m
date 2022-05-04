@@ -2,7 +2,7 @@
 % Model takes the leverage effect into account. Includes jumps in parameter
 % values.
 %
-% x(t) = mu(1-phi)+phix(t-1)+f(epsilon, alpha, gamma_1, gamma_2)
+% x(t) = beta_0+phix(t-1)+f(epsilon, alpha, gamma_1, gamma_2)
 %     +sigma_etaq(t)
 % with 0 < phi < 1, f(epsilon, alpha, gamma_1, gamma_2) =
 %                       alpha(I(epsilon < 0)-0.5)+gamma_1epsilon+
@@ -19,7 +19,7 @@ close all;
 
 rng(123);
 
-N_sim = 100;                              % number of simulations
+N_sim = 1;                              % number of simulations
 T = 100000;                               % time span of run
 jumps = [20000 40000 60000 80000 T+1];    % indices to jump at
 N_particles = 0;                          % particle filter not used
